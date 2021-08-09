@@ -31,8 +31,7 @@ class ReorderableCarousel extends StatefulWidget {
   ///
   /// Will be called to builded the dragged item if [draggedItemBuilder] isn't
   /// defined
-  final Widget Function(double itemWidth, int index, bool isSelected)
-      itemBuilder;
+  final Widget Function(double itemWidth, int index, bool isSelected) itemBuilder;
 
   /// Builder that's called when the item at [index] is being dragged.
   final Widget Function(double itemWidth, int index)? draggedItemBuilder;
@@ -62,6 +61,12 @@ class ReorderableCarousel extends StatefulWidget {
   /// Animation Curve used for scrolling to the next selected item.
   final Curve scrollToCurve;
 
+  /// If set to [true], widget composition will include empty space at the start
+  final bool startOffsetEnabled;
+
+  /// If set to [true], widget composition will include empty space at the end
+  final bool endOffsetEnabled;
+
   /// Creates a new [ReorderableCarousel]
   ReorderableCarousel({
     required this.numItems,
@@ -74,6 +79,8 @@ class ReorderableCarousel extends StatefulWidget {
     this.draggedItemBuilder,
     this.scrollToDuration = const Duration(milliseconds: 350),
     this.scrollToCurve = Curves.linear,
+    this.startOffsetEnabled = true,
+    this.endOffsetEnabled = true,
     Key? key,
   })  : assert(numItems >= 1, "You need at least one item"),
         assert(itemWidthFraction >= 1),
@@ -114,8 +121,8 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
         double width = constraints.maxWidth / widget.itemWidthFraction;
         if (width != _itemMaxWidth) {
           _itemMaxWidth = width;
-          _startingOffset = (constraints.maxWidth / 2) - (_itemMaxWidth / 2);
-          _endingOffset = max(0, _startingOffset - _iconSize);
+          _startingOffset = widget.startOffsetEnabled ? (constraints.maxWidth / 2) - (_itemMaxWidth / 2) : 0.0;
+          _endingOffset = widget.endOffsetEnabled ? max(0, _startingOffset - _iconSize) : 0.0;
 
           // whenever the size of this widget changes, we'll rescroll to center
           // the selected item.
@@ -187,8 +194,7 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
                     list?.startItemDragReorder(
                       index: i,
                       event: event,
-                      recognizer:
-                          DelayedMultiDragGestureRecognizer(debugOwner: this),
+                      recognizer: DelayedMultiDragGestureRecognizer(debugOwner: this),
                     );
                     _PointerSmuggler(debugOwner: this)
                       ..onStart = ((d) {
@@ -247,7 +253,8 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
               child: ScaleTransition(
                 scale: size,
                 child: Material(
-                  elevation: 4,
+                  color: Colors.transparent,
+                  elevation: 0.0,
                   child: item,
                 ),
               ),
@@ -260,9 +267,7 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
 
   Widget _buildAddItemIcon(int index) {
     // once we have maxNumberItems items, don't allow anymore items to be built
-    if ((widget.maxNumberItems != null &&
-            widget.numItems < widget.maxNumberItems!) ||
-        widget.maxNumberItems == null) {
+    if ((widget.maxNumberItems != null && widget.numItems < widget.maxNumberItems!) || widget.maxNumberItems == null) {
       return AnimatedOpacity(
         opacity: _dragInProgress ? 0.0 : 1.0,
         duration: const Duration(milliseconds: 250),
@@ -311,10 +316,7 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
 /// recognizer starts, but doesn't event up actually doing anything with the
 /// event (seeing as it's handled by the other gesture recognizer)
 class _PointerSmuggler extends DelayedMultiDragGestureRecognizer {
-  _PointerSmuggler(
-      {Duration delay = kLongPressTimeout,
-      Object? debugOwner,
-      PointerDeviceKind? kind})
+  _PointerSmuggler({Duration delay = kLongPressTimeout, Object? debugOwner, PointerDeviceKind? kind})
       : super(debugOwner: debugOwner, delay: delay, kind: kind);
 
   @override
