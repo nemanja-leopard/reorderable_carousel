@@ -181,43 +181,36 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
           },
           itemCount: children.length,
           itemBuilder: (context, i) {
-            return Row(
+            return Listener(
               key: ValueKey(i),
-              children: [
-                Listener(
-                  behavior: HitTestBehavior.opaque,
-                  onPointerDown: (event) {
-                    _updateSelectedIndex(i - 1);
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (event) {
+                _updateSelectedIndex(i - 1);
 
-                    final list = SliverReorderableList.maybeOf(context);
+                final list = SliverReorderableList.maybeOf(context);
 
-                    list?.startItemDragReorder(
-                      index: i,
-                      event: event,
-                      recognizer: DelayedMultiDragGestureRecognizer(debugOwner: this),
-                    );
-                    _PointerSmuggler(debugOwner: this)
-                      ..onStart = ((d) {
-                        // the wait time has passed and the drag has
-                        // started
-                        setState(() {
-                          _dragInProgress = true;
-                        });
-                        return;
-                      })
-                      ..addPointer(event);
-                  },
-                  onPointerUp: (e) {
+                list?.startItemDragReorder(
+                  index: i,
+                  event: event,
+                  recognizer: DelayedMultiDragGestureRecognizer(debugOwner: this),
+                );
+                _PointerSmuggler(debugOwner: this)
+                  ..onStart = ((d) {
+                    // the wait time has passed and the drag has
+                    // started
                     setState(() {
-                      _dragInProgress = false;
+                      _dragInProgress = true;
                     });
-                  },
-                  child: children[i],
-                ),
-
-                // no plus icons for the invisible boxes
-                if (i != 0 && i != children.length - 1) _buildAddItemIcon(i),
-              ],
+                    return;
+                  })
+                  ..addPointer(event);
+              },
+              onPointerUp: (e) {
+                setState(() {
+                  _dragInProgress = false;
+                });
+              },
+              child: children[i],
             );
           },
           proxyDecorator: (child, index, animation) {
