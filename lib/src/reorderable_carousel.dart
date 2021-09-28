@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
@@ -67,6 +68,9 @@ class ReorderableCarousel extends StatefulWidget {
   /// If set to [true], widget composition will include empty space at the end
   final bool endOffsetEnabled;
 
+  /// This field allows the caller to control the scroll position of the carousel
+  final ValueListenable<int>? scrollToIndexNotifier;
+
   /// Creates a new [ReorderableCarousel]
   ReorderableCarousel({
     required this.numItems,
@@ -81,6 +85,7 @@ class ReorderableCarousel extends StatefulWidget {
     this.scrollToCurve = Curves.linear,
     this.startOffsetEnabled = true,
     this.endOffsetEnabled = true,
+    this.scrollToIndexNotifier,
     Key? key,
   })  : assert(numItems >= 1, "You need at least one item"),
         assert(itemWidthFraction >= 1),
@@ -108,11 +113,20 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
   void initState() {
     super.initState();
     _controller = ScrollController();
+    if (widget.scrollToIndexNotifier != null) {
+      widget.scrollToIndexNotifier!.addListener(_onScrollToIndexRequested);
+    }
+  }
+
+  void _onScrollToIndexRequested() {
+    final index = widget.scrollToIndexNotifier!.value;
+    _scrollToBox(index);
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    widget.scrollToIndexNotifier?.removeListener(_onScrollToIndexRequested);
     super.dispose();
   }
 
@@ -300,7 +314,7 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
 
   void _scrollToBox(int index) {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
-      _controller.animateTo(((_itemMaxWidth + _iconSize) * index),
+      _controller.animateTo(max((_itemMaxWidth + _iconSize) * index, _controller.position.maxScrollExtent),
           duration: widget.scrollToDuration, curve: widget.scrollToCurve);
     });
   }
