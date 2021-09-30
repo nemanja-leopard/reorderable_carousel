@@ -314,7 +314,7 @@ class _ReorderableCarouselState extends State<ReorderableCarousel> {
 
   void _scrollToBox(int index) {
     WidgetsBinding.instance?.addPostFrameCallback((_) {
-      _controller.animateTo(max((_itemMaxWidth + _iconSize) * index, _controller.position.maxScrollExtent),
+      _controller.animateTo(min((_itemMaxWidth + _iconSize) * index, _controller.position.maxScrollExtent),
           duration: widget.scrollToDuration, curve: widget.scrollToCurve);
     });
   }
